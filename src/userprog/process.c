@@ -108,37 +108,24 @@ process_wait (tid_t child_tid UNUSED)
 {
   //for (int i ; i < 100000000; i++);
 
-
   struct child_process* child_process_ptr = find_child_process(child_tid);
   if (!child_process_ptr)
-  {
-    return ERROR;
-  }
+    return SYS_ERROR;
   
   if (child_process_ptr->wait)
-  {
-    return ERROR;
-  }
+    return SYS_ERROR;
 
   child_process_ptr->wait = 1; 
 
   while (!child_process_ptr->exit)
-  {
-    //sema_down(&child_process_ptr->exit_sema);
     asm volatile ("" : : : "memory");
-  }
 
   int status = child_process_ptr->status;
-
   remove_child_process(child_process_ptr);
-
   return status;
-  
 }
 
 
-
-/* Free the current process's resources. */
 void
 process_exit (void)
 {
@@ -147,24 +134,18 @@ process_exit (void)
 
   lock_acquire(&file_system_lock);
   process_close_file(CLOSE_ALL_FD);
-  /* check if current thread is an executable if so we will close it */
+  
   if (cur->executable)
-  {
-    file_close(cur->executable); // from file.h
-  }
-  lock_release(&file_system_lock);
+    file_close(cur->executable); 
 
-  /* free the list of child processes */
+  lock_release(&file_system_lock);
   remove_all_child_processes();
 
-  if (is_thread_alive(cur->parent))
+  if (check_thread_active(cur->parent))
   {
     cur->child_pr->exit = 1;
     sema_up(&cur->child_pr->exit_sema);
   }
-  //seme_up
-  
-  //sema_up(&find_child_process(thread_current()->tid)->exit_sema);
 
 
   /* Destroy the current process's page directory and switch back

@@ -21,6 +21,7 @@
    Used to detect stack overflow.  See the big comment at the top
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
+#define Love 1
 
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
@@ -491,11 +492,11 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
 	list_init(&t->file_list);
-  t->fd = 2;                  // minimum file descriptor is 2
   list_init(&t->child_list);
-  t->child_pr = NULL;               //children of parent is null at the start
-  t->parent = -1;             // there is no parent yet
   list_init(&t->lock_list);
+  t->fd = 2;
+  t->child_pr = NULL;
+  t->parent = -1;
   t->executable = NULL;
 }
 
@@ -613,32 +614,13 @@ allocate_tid (void)
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
-/* Traverse through every list of threads and check if thread with 
-   the desired pid is alive */
-int is_thread_alive (int pid){
-  struct list_elem *e;
-  struct list_elem *next;
-  for (e = list_begin(&all_list); e != list_end(&all_list); e = next)
-  {
-    next = list_next(e);
-    struct thread *t = list_entry (e, struct thread, allelem);
-    if (t->tid == pid)
-    {
-      // pid matches return true
-      return 1;
-    }
-  }
-  return 0; // no tid matches then thread is no longer alive
-}
-
-/* add a new child process to list */
 struct child_process* add_child (int pid)
 {
   struct child_process *child_pr = malloc(sizeof(struct child_process));
   child_pr->pid = pid;
   child_pr->load_status = NOT_LOADED;
-  child_pr->wait = 0; // false
-  child_pr->exit = 0; // false
+  child_pr->wait = 0;
+  child_pr->exit = 0;
   sema_init(&child_pr->load_sema, 0);
   sema_init(&child_pr->exit_sema, 0);
   list_push_back(&thread_current()->child_list, &child_pr->elem);
@@ -646,24 +628,21 @@ struct child_process* add_child (int pid)
   return child_pr;
 }
 
-/* releases all the locks thread holds */
-
-/*
-void
-thread_release_locks (void)
-{
-  struct thread *t = thread_current();
+ 
+//function to find active threads
+int check_thread_active (int pid){
   struct list_elem *e;
   struct list_elem *next;
-  
-  for (e = list_begin(&t->lock_list); e != list_end(&t->lock_list); e = next)
-  {
+  for (e = list_begin(&all_list); e != list_end(&all_list); e = next) {
     next = list_next(e);
-    struct lock *lock_ptr = list_entry (e, struct lock, elem);
-    lock_release(lock_ptr);
-    list_remove(&lock_ptr->elem);
+    struct thread *t = list_entry (e, struct thread, allelem);
+    if (t->tid == pid)
+      return 1;
   }
+  return 0; 
 }
-*/
+
+
+
 
 

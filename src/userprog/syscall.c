@@ -297,7 +297,7 @@ exit (int status)
 {
   struct thread *cur = thread_current();
   
-  if (is_thread_alive(cur->parent) && cur->child_pr){
+  if (check_thread_active(cur->parent) && cur->child_pr){
     if (status < 0)
       status = -1;
     cur->child_pr->status = status;
@@ -344,7 +344,7 @@ syscall_open(const char *file_name)
   if (!file_ptr)
   {
     lock_release(&file_system_lock);
-    return ERROR;
+    return SYS_ERROR;
   }
   int file_des = add_file(file_ptr);
   lock_release(&file_system_lock);
@@ -386,7 +386,7 @@ syscall_read(int filedes, void *buffer, unsigned length)
   if (!file_ptr)
   {
     lock_release(&file_system_lock);
-    return ERROR;
+    return SYS_ERROR;
   }
   int bytes_read = file_read(file_ptr, buffer, length); // from file.h
   lock_release (&file_system_lock);
@@ -413,7 +413,7 @@ syscall_write (int filedes, const void * buffer, unsigned byte_size)
     if (!file_ptr)
     {
       lock_release(&file_system_lock);
-      return ERROR;
+      return SYS_ERROR;
     }
     int bytes_written = file_write(file_ptr, buffer, byte_size); 
     lock_release (&file_system_lock);
@@ -429,7 +429,7 @@ exec(const char* cmdline) //failed
     struct child_process *child_process_ptr = find_child_process(pid);
     if (!child_process_ptr)
     {
-      return ERROR;
+      return SYS_ERROR;
     }
     /* check if process if loaded */
     if (child_process_ptr->load_status == NOT_LOADED)
@@ -440,7 +440,7 @@ exec(const char* cmdline) //failed
     if (child_process_ptr->load_status == LOAD_FAIL)
     {
       remove_child_process(child_process_ptr);
-      return ERROR;
+      return SYS_ERROR;
     }
     return pid;
 }
@@ -455,7 +455,7 @@ syscall_filesize(int filedes)
   if (!file_ptr)
   {
     lock_release(&file_system_lock);
-    return ERROR;
+    return SYS_ERROR;
   }
   int filesize = file_length(file_ptr); // from file.h
   lock_release(&file_system_lock);
@@ -486,7 +486,7 @@ syscall_tell(int filedes)
   if (!file_ptr)
   {
     lock_release(&file_system_lock);
-    return ERROR;
+    return SYS_ERROR;
   }
   off_t offset = file_tell(file_ptr);
   lock_release(&file_system_lock);
@@ -498,7 +498,8 @@ void
 validate_ptr (const void *vaddr)
 {
     if (vaddr < USER_VADDR_BOTTOM || !is_user_vaddr(vaddr))
-      exit(ERROR);
+      exit(SYS_ERROR);
+    
 }
 
 
@@ -527,7 +528,7 @@ getpage_ptr(const void *vaddr)
 {
   void *ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
   if (!ptr)
-    exit(ERROR);
+    exit(SYS_ERROR);
   return (int)ptr;
 }
 
@@ -581,7 +582,7 @@ add_file (struct file *file_name)
   struct process_file *process_file_ptr = malloc(sizeof(struct process_file));
   if (!process_file_ptr)
   {
-    return ERROR;
+    return SYS_ERROR;
   }
   process_file_ptr->file = file_name;
   process_file_ptr->fd = thread_current()->fd;
