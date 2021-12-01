@@ -640,14 +640,11 @@ process_close_file (int file_descriptor)
 
 /**
  *
- * FAIL tests/userprog/args-multiple
- * FAIL tests/userprog/args-many
  * FAIL tests/userprog/sc-boundary-3
  * FAIL tests/userprog/exec-bound-2
  * FAIL tests/userprog/multi-recurse
  * rox 
  * bad
- * lg
- * sm
- * syn
+ * FAIL tests/userprog/no-vm/multi-oom
+ * FAIL tests/filesys/base/syn-read
  **/
