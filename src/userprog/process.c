@@ -271,9 +271,9 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
   char *save_ptr;
-  char file_name_copy[30];
+  char file_name_copy[100];
 
-  strlcpy(file_name_copy, file_name, 30);
+  strlcpy(file_name_copy, file_name, 100);
 
   file_name = strtok_r (file_name, " ", &save_ptr);
 
@@ -526,15 +526,12 @@ setup_stack (void **esp, char *init_name)
   //Arguments: Last to First
   int i = argc;
   while( --i >= 0){
-    //printf("%s,\n ", &arr[i]);
     *esp -= (strlen(arr[i])+1);
     memcpy(*esp, arr[i], strlen(arr[i])+1);
     arr[i] = *esp;
   }
 
   //word allign
-  //*esp = (int)*esp & 0xfffffffc;
-  
   int zeros = (uint32_t)*esp % 4;
   *esp -= zeros;
 
