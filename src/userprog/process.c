@@ -74,7 +74,7 @@ start_process (void *file_name_)
     thread_current()->child_pr->load_status = LOADED;
   }
   else {
-    thread_current()->child_pr->load_status = LOAD_FAIL;
+    thread_current()->child_pr->load_status = LOAD_FAILED;
   }
   sema_up (&thread_current()->child_pr->load_sema);
 
@@ -108,7 +108,7 @@ process_wait (tid_t child_tid UNUSED)
 {
   //for (int i ; i < 100000000; i++);
 
-  struct child_process* child_process_ptr = find_child_process(child_tid);
+  struct child_process* child_process_ptr = find_child(child_tid);
   if (!child_process_ptr)
     return SYS_ERROR;
   
@@ -121,7 +121,7 @@ process_wait (tid_t child_tid UNUSED)
     asm volatile ("" : : : "memory");
 
   int status = child_process_ptr->status;
-  remove_child_process(child_process_ptr);
+  child_remove(child_process_ptr);
   return status;
 }
 
@@ -132,14 +132,14 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
-  lock_acquire(&file_system_lock);
-  process_close_file(CLOSE_ALL_FD);
+  lock_acquire(&fs_lock);
+  close_file(ALL_FDESC_CLOSE);
   
   if (cur->executable)
     file_close(cur->executable); 
 
-  lock_release(&file_system_lock);
-  remove_all_child_processes();
+  lock_release(&fs_lock);
+  children_remove();
 
   if (check_thread_active(cur->parent))
   {

@@ -3,20 +3,15 @@
 
 #include "threads/synch.h"
 #include "threads/thread.h"
-void syscall_init (void);
 
 #define SYS_ERROR -1
-
-
-/*change these names*/
 #define NOT_LOADED 0
+#define LOAD_FAILED 2
 #define LOADED 1
-#define LOAD_FAIL 2
-#define CLOSE_ALL_FD -1
-
+#define ALL_FDESC_CLOSE -1
 #define USER_VADDR_BOTTOM ((void *) 0x08048000)
 
-struct lock file_system_lock;
+struct lock fs_lock;
 
 struct process_file {
     struct file *file;
@@ -25,14 +20,11 @@ struct process_file {
 };
 
 struct child_process {
-  int pid;
-  int load_status;
-  int wait;
-  int exit;
-  int status;
-  struct semaphore load_sema;
-  struct semaphore exit_sema;
+  int pid, load_status, wait, exit, status;
+  struct semaphore load_sema, exit_sema;
   struct list_elem elem;
 };
+
+void syscall_init (void);
 
 #endif /* userprog/syscall.h */
