@@ -1,103 +1,142 @@
-                         +-----------------+
-                         |      CS 140     |
-                         |  SAMPLE PROJECT |
-                         | DESIGN DOCUMENT |
-                         +-----------------+
+		     +--------------------------+
+       	     |		     CS 318	    	|
+		     | PROJECT 2: USER PROGRAMS	|
+		     | 	   DESIGN DOCUMENT     	|
+		     +--------------------------+
 
 ---- GROUP ----
 
-Ben Pfaff <blp@stanford.edu>
+>> Fill in the names and email addresses of your group members.
+
+190482K
+Supul Pushpakumara <supul.19@cse.mrt.ac.lk>
+
 
 ---- PRELIMINARIES ----
 
->> If you have any preliminary comments on your submission, notes for
->> the TAs, or extra credit, please give them here.
-
-(This is a sample design document.)
+>> If you have any preliminary comments on your submission, notes for the
+>> TAs, or extra credit, please give them here.
 
 >> Please cite any offline or online sources you consulted while
->> preparing your submission, other than the Pintos documentation,
->> course text, and lecture notes.
+>> preparing your submission, other than the Pintos documentation, course
+>> text, lecture notes, and course staff.
+https://oslab.kaist.ac.kr/pintosslides/
+https://inst.eecs.berkeley.edu/~cs162/su19/static/projects/proj2.pdf
+https://www.youtube.com/watch?v=dQyvVZzTV5E&t=2s
 
-None.
 
-                                 JOIN
-                                 ====
+			   ARGUMENT PASSING
+			   ================
 
 ---- DATA STRUCTURES ----
 
->> Copy here the declaration of each new or changed `struct' or `struct'
->> member, global or static variable, `typedef', or enumeration.
->> Identify the purpose of each in 25 words or less.
+>> A1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
 
-A "latch" is a new synchronization primitive.  Acquires block
-until the first release.  Afterward, all ongoing and future
-acquires pass immediately.
 
-    /* Latch. */
-    struct latch 
-      {
-        bool released;              /* Released yet? */
-        struct lock monitor_lock;   /* Monitor lock. */
-        struct condition rel_cond;  /* Signaled when released. */
-      };
-
-Added to struct thread:
-
-    /* Members for implementing thread_join(). */
-    struct latch ready_to_die;   /* Release when thread about to die. */
-    struct semaphore can_die;    /* Up when thread allowed to die. */
-    struct list children;        /* List of child threads. */
-    list_elem children_elem;     /* Element of `children' list. */
 
 ---- ALGORITHMS ----
 
->> Briefly describe your implementation of thread_join() and how it
->> interacts with thread termination.
-
-thread_join() finds the joined child on the thread's list of
-children and waits for the child to exit by acquiring the child's
-ready_to_die latch.  When thread_exit() is called, the thread
-releases its ready_to_die latch, allowing the parent to continue.
-
----- SYNCHRONIZATION ----
-
->> Consider parent thread P with child thread C.  How do you ensure
->> proper synchronization and avoid race conditions when P calls wait(C)
->> before C exits?  After C exits?  How do you ensure that all resources
->> are freed in each case?  How about when P terminates without waiting,
->> before C exits?  After C exits?  Are there any special cases?
-
-C waits in thread_exit() for P to die before it finishes its own
-exit, using the can_die semaphore "down"ed by C and "up"ed by P as
-it exits.  Regardless of whether whether C has terminated, there
-is no race on wait(C), because C waits for P's permission before
-it frees itself.
-
-Regardless of whether P waits for C, P still "up"s C's can_die
-semaphore when P dies, so C will always be freed.  (However,
-freeing C's resources is delayed until P's death.)
-
-The initial thread is a special case because it has no parent to
-wait for it or to "up" its can_die semaphore.  Therefore, its
-can_die semaphore is initialized to 1.
+>> A2: Briefly describe how you implemented argument parsing.  How do
+>> you arrange for the elements of argv[] to be in the right order?
+>> How do you avoid overflowing the stack page?
 
 ---- RATIONALE ----
 
->> Critique your design, pointing out advantages and disadvantages in
->> your design choices.
+>> A3: Why does Pintos implement strtok_r() but not strtok()?
 
-This design has the advantage of simplicity.  Encapsulating most
-of the synchronization logic into a new "latch" structure
-abstracts what little complexity there is into a separate layer,
-making the design easier to reason about.  Also, all the new data
-members are in `struct thread', with no need for any extra dynamic
-allocation, etc., that would require extra management code.
+>> A4: In Pintos, the kernel separates commands into a executable name
+>> and arguments.  In Unix-like systems, the shell does this
+>> separation.  Identify at least two advantages of the Unix approach.
 
-On the other hand, this design is wasteful in that a child thread
-cannot free itself before its parent has terminated.  A parent
-thread that creates a large number of short-lived child threads
-could unnecessarily exhaust kernel memory.  This is probably
-acceptable for implementing kernel threads, but it may be a bad
-idea for use with user processes because of the larger number of
-resources that user processes tend to own.
+			     SYSTEM CALLS
+			     ============
+
+---- DATA STRUCTURES ----
+
+>> B1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
+
+>> B2: Describe how file descriptors are associated with open files.
+>> Are file descriptors unique within the entire OS or just within a
+>> single process?
+
+---- ALGORITHMS ----
+
+>> B3: Describe your code for reading and writing user data from the
+>> kernel.
+
+>> B4: Suppose a system call causes a full page (4,096 bytes) of data
+>> to be copied from user space into the kernel.  What is the least
+>> and the greatest possible number of inspections of the page table
+>> (e.g. calls to pagedir_get_page()) that might result?  What about
+>> for a system call that only copies 2 bytes of data?  Is there room
+>> for improvement in these numbers, and how much?
+
+>> B5: Briefly describe your implementation of the "wait" system call
+>> and how it interacts with process termination.
+
+>> B6: Any access to user program memory at a user-specified address
+>> can fail due to a bad pointer value.  Such accesses must cause the
+>> process to be terminated.  System calls are fraught with such
+>> accesses, e.g. a "write" system call requires reading the system
+>> call number from the user stack, then each of the call's three
+>> arguments, then an arbitrary amount of user memory, and any of
+>> these can fail at any point.  This poses a design and
+>> error-handling problem: how do you best avoid obscuring the primary
+>> function of code in a morass of error-handling?  Furthermore, when
+>> an error is detected, how do you ensure that all temporarily
+>> allocated resources (locks, buffers, etc.) are freed?  In a few
+>> paragraphs, describe the strategy or strategies you adopted for
+>> managing these issues.  Give an example.
+
+---- SYNCHRONIZATION ----
+
+>> B7: The "exec" system call returns -1 if loading the new executable
+>> fails, so it cannot return before the new executable has completed
+>> loading.  How does your code ensure this?  How is the load
+>> success/failure status passed back to the thread that calls "exec"?
+
+>> B8: Consider parent process P with child process C.  How do you
+>> ensure proper synchronization and avoid race conditions when P
+>> calls wait(C) before C exits?  After C exits?  How do you ensure
+>> that all resources are freed in each case?  How about when P
+>> terminates without waiting, before C exits?  After C exits?  Are
+>> there any special cases?
+
+---- RATIONALE ----
+
+>> B9: Why did you choose to implement access to user memory from the
+>> kernel in the way that you did?
+
+>> B10: What advantages or disadvantages can you see to your design
+>> for file descriptors?
+
+>> B11: The default tid_t to pid_t mapping is the identity mapping.
+>> If you changed it, what advantages are there to your approach?
+
+			   SURVEY QUESTIONS
+			   ================
+
+Answering these questions is optional, but it will help us improve the
+course in future quarters.  Feel free to tell us anything you
+want--these questions are just to spur your thoughts.  You may also
+choose to respond anonymously in the course evaluations at the end of
+the quarter.
+
+>> In your opinion, was this assignment, or any one of the three problems
+>> in it, too easy or too hard?  Did it take too long or too little time?
+
+>> Did you find that working on a particular part of the assignment gave
+>> you greater insight into some aspect of OS design?
+
+>> Is there some particular fact or hint we should give students in
+>> future quarters to help them solve the problems?  Conversely, did you
+>> find any of our guidance to be misleading?
+
+>> Do you have any suggestions for the TAs to more effectively assist
+>> students, either for future quarters or the remaining projects?
+
+>> Any other comments?
