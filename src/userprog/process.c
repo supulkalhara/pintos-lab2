@@ -141,8 +141,7 @@ process_exit (void)
   lock_release(&fs_lock);
   children_remove();
 
-  if (check_thread_active(cur->parent))
-  {
+  if (check_thread_active(cur->parent)) {
     cur->child_pr->exit = 1;
     sema_up(&cur->child_pr->exit_sema);
   }
