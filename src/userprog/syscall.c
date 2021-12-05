@@ -272,6 +272,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
     
       break;
       
+
     default:
 
       break;
@@ -283,8 +284,7 @@ void
 stack_access (struct intr_frame *f, int *args, int num_of_args) {
 
   int *ptr;
-  for (int i = 0; i < num_of_args; i++)
-  {
+  for (int i = 0; i < num_of_args; i++) {
     ptr = (int *) f->esp + i + 1;
     ptr_validator((const void *) ptr);
     args[i] = *ptr;
@@ -294,9 +294,10 @@ stack_access (struct intr_frame *f, int *args, int num_of_args) {
 
 void
 exit (int status) {
+
   struct thread *curr_thread = thread_current();
   
-  if (check_thread_active(curr_thread->parent) && curr_thread->child_pr){
+  if (check_thread_active(curr_thread->parent) && curr_thread->child_pr) { 
     if (status < 0)
       status = -1;
     curr_thread->child_pr->status = status;
@@ -309,6 +310,7 @@ exit (int status) {
 
 bool
 create(const char* file_name, unsigned initial_size) {
+  
   lock_acquire(&fs_lock);
   bool success = filesys_create(file_name, initial_size);
   lock_release(&fs_lock);
@@ -319,6 +321,7 @@ create(const char* file_name, unsigned initial_size) {
 
 bool
 remove(const char* file_name) {
+  
   lock_acquire(&fs_lock);
   bool success = filesys_remove(file_name);
   lock_release(&fs_lock);
@@ -329,6 +332,7 @@ remove(const char* file_name) {
 
 int
 open(const char *file_name) {
+  
   lock_acquire(&fs_lock);
   struct file *file_ptr = filesys_open(file_name);
   
@@ -346,7 +350,9 @@ open(const char *file_name) {
 
 int
 add_file (struct file *file_name) {
+  
   struct process_file *file_ptr = malloc(sizeof(struct process_file));
+  
   if (!file_ptr)
     return SYS_ERROR;
     
@@ -361,12 +367,14 @@ add_file (struct file *file_name) {
 
 int
 read(int filedes, void *buffer, unsigned length) {
+  
   if (length <= 0)
     return length;
   
   if (filedes == STD_INPUT) {
     unsigned i = 0;
     uint8_t *buf = (uint8_t *) buffer;
+    
     for (;i < length; i++)
       buf[i] = input_getc(); 
     return length;
@@ -389,6 +397,7 @@ read(int filedes, void *buffer, unsigned length) {
 
 int 
 write (int filedes, const void * buffer, unsigned byte_size) {
+    
     if (byte_size <= 0)
       return byte_size;
 
@@ -414,6 +423,7 @@ write (int filedes, const void * buffer, unsigned byte_size) {
 
 struct file*
 get_file (int filedes) {
+
   struct thread *t = thread_current();
   struct list_elem* next;
   struct list_elem* e = list_begin(&t->file_list);
@@ -432,6 +442,7 @@ get_file (int filedes) {
 
 pid_t
 exec(const char* cmdline) {
+
     pid_t pid = process_execute(cmdline);
     struct child_process *child_process_ptr = find_child(pid);
 
@@ -452,6 +463,7 @@ exec(const char* cmdline) {
 
 int
 filesize(int filedes) {
+
   lock_acquire(&fs_lock);
   struct file *file_ptr = get_file(filedes);
 
@@ -469,6 +481,7 @@ filesize(int filedes) {
 
 void
 seek (int filedes, unsigned new_position) {
+
   lock_acquire(&fs_lock);
   struct file *file_ptr = get_file(filedes);
 
@@ -484,6 +497,7 @@ seek (int filedes, unsigned new_position) {
 
 unsigned
 tell(int filedes) {
+
   lock_acquire(&fs_lock);
   struct file *file_ptr = get_file(filedes);
 
@@ -503,7 +517,6 @@ void
 ptr_validator (const void *vaddr) {
     if (vaddr < USER_VADDR_BOTTOM || !is_user_vaddr(vaddr))
       exit(SYS_ERROR);
-    
 }
 
 
@@ -515,8 +528,10 @@ str_validator (const void* str) {
 
 void
 buf_validator(const void* buf, unsigned byte_size) {
+
   unsigned i = 0;
   char* local_buffer = (char *)buf;
+
   for (; i < byte_size; i++) {
     ptr_validator((const void*)local_buffer);
     local_buffer++;
@@ -528,6 +543,7 @@ buf_validator(const void* buf, unsigned byte_size) {
 int
 get_page(const void *vaddr) {
   void *ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
+
   if (!ptr)
     exit(SYS_ERROR);
 
@@ -535,8 +551,8 @@ get_page(const void *vaddr) {
 }
 
 
-struct child_process* find_child(int pid)
-{
+struct child_process* find_child(int pid) {
+
   struct thread *t = thread_current();
   struct list_elem *e;
   struct list_elem *next;
@@ -544,6 +560,7 @@ struct child_process* find_child(int pid)
   for (e = list_begin(&t->child_list); e != list_end(&t->child_list); e = next) {
     next = list_next(e);
     struct child_process *child_pr = list_entry(e, struct child_process, elem);
+
     if (pid == child_pr->pid)
       return child_pr;
   }
@@ -562,6 +579,7 @@ child_remove (struct child_process *child_pr) {
 
 /* remove all child processes */
 void children_remove (void) {
+
   struct thread *t = thread_current();
   struct list_elem *next;
   struct list_elem *e = list_begin(&t->child_list);
@@ -577,6 +595,7 @@ void children_remove (void) {
 
 void
 close_file (int file_descriptor) {
+
   struct thread *t = thread_current();
   struct list_elem *next;
   struct list_elem *e = list_begin(&t->file_list);
@@ -596,6 +615,7 @@ close_file (int file_descriptor) {
   }
 }
 
+
 /**
  *
  * FAIL tests/userprog/sc-boundary-3
@@ -608,15 +628,6 @@ close_file (int file_descriptor) {
  * pintos -p tests/userprog/multi-recurse -a multi-recurse -- -q  -f run 'multi-recurse 15'
  * 
  * rox (all rox are failing)
- * bad (all bad are failing)
- * pintos -p tests/userprog/bad-read -a bad-read -- -q  -f run bad-read
- * pintos -p tests/userprog/bad-write -a bad-write -- -q  -f run bad-write
- * pintos -p tests/userprog/bad-jump -a bad-jump -- -q  -f run bad-jump
- * 
  * FAIL tests/userprog/no-vm/multi-oom
- * 
- * FAIL tests/filesys/base/syn-read
- * pintos -p tests/filesys/base/syn-read -a syn-read
- * pintos -p tests/filesys/base/child-syn-read -a child-syn-read -- -q  -f run syn-read
- * 
+ *  
  **/

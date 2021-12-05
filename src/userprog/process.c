@@ -70,12 +70,11 @@ start_process (void *file_name_)
 
   
   //hex_dump(if_.esp , if_.esp , PHYS_BASE - if_.esp , true);
-  if (success){
+  if (success)
     thread_current()->child_pr->load_status = LOADED;
-  }
-  else {
+  else 
     thread_current()->child_pr->load_status = LOAD_FAILED;
-  }
+
   sema_up (&thread_current()->child_pr->load_sema);
 
   /* If load failed, quit. */
@@ -104,11 +103,11 @@ start_process (void *file_name_)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED) 
-{
+process_wait (tid_t child_tid UNUSED) {
   //for (int i ; i < 100000000; i++);
 
   struct child_process* child_process_ptr = find_child(child_tid);
+
   if (!child_process_ptr)
     return SYS_ERROR;
   
@@ -119,16 +118,21 @@ process_wait (tid_t child_tid UNUSED)
 
   while (!child_process_ptr->exit)
     asm volatile ("" : : : "memory");
+    /**
+     * compile-time memory barrier 
+     * that won't allow reordering any memory access instructions:
+    */
 
   int status = child_process_ptr->status;
   child_remove(child_process_ptr);
+
   return status;
 }
 
 
 void
-process_exit (void)
-{
+process_exit (void) {
+
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
@@ -270,7 +274,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
   char *save_ptr;
-  char file_name_copy[100];
+  char file_name_copy[100]; //better if change to len
 
   strlcpy(file_name_copy, file_name, 100);
 

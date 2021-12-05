@@ -103,13 +103,13 @@ struct thread
     unsigned magic;                     /* Detects stack overflow. */
 
 		// for sys calls
-    struct list file_list;      // list of files
+    struct list file_list;      
     int fd;                     // file descriptor
-    struct list lock_list;      // use to keep track of locks the thread holds
-   struct list child_list;     // list of child processes
-    tid_t parent;               // id of the parent
+    struct list lock_list;     
+   struct list child_list;     // list of child
+    tid_t parent;               // id of parent
     struct child_process* child_pr;   // point to child process
-    struct file* executable;    // use for denying writes to executables
+    struct file* executable;  
     
   };
 
