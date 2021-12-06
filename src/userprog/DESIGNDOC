@@ -50,7 +50,7 @@
 			// Pointer to next token
 
 		int argc
-			// Current number of arg being processed
+			// number of arg being processed (counter)
 
 		static bool setup_stack (void **esp, char *init_name) 
 			// change to take the filename
@@ -61,6 +61,12 @@
 >> A2: Briefly describe how you implemented argument parsing.  How do
 >> you arrange for the elements of argv[] to be in the right order?
 >> How do you avoid overflowing the stack page?
+
+		I took the input and split them from ' ' using strtok_r and assigned the filename to token to create the thread.  
+		After that I took the original input and split them into a string array. Then I copied those separated strings 
+		in to the stack in the given order in the setup_stack() function. Since I do not know the exact size of the
+		arguments, I gave it an initial value using malloc() and check if the size is not enough for all the arguments 
+		in a for loop. If it is not enough I realloc() the array to double its size. So that it can handle any size of args.
 
 		
 
@@ -99,41 +105,40 @@
 				// file descriptor
 
 			struct list lock_list;      
-				// use to keep track of locks the thread holds
+				// to hold locks the thread holds
 
 			struct list child_list;     
 				// list of child processes
 
 			tid_t parent;               
-				// id of the parent
+				// parent id
 
 			struct child_process* child_pr;   
-				// point to child process
+				// pointer to child process
 
 			struct file* executable;    
-				// use for denying writes to executables
+				// to check whether it is writable 
 
 
 		syscall.h -
 
 			struct lock fs_lock;
-				// Use for locking critical section that involves modifying files.
+				// to lock critical section.
 
 			struct process_file {
 				struct file *file;
 				int fd;
 				struct list_elem elem;
 			};
-			/*   The process_file holds the file that we are currently working with. It contains 
-					the file descriptor and the content of the file.	*/
+			/*   The process_file holds the file that we use with the details 
+					about the file descriptor and the content of the file.	*/
 
 			struct child_process {
 			int pid, load_status, wait, exit, status;
 			struct semaphore load_sema, exit_sema;
 			struct list_elem elem;
 			};
-			/*   The struct child_process is meant to be a child process which will hold 
-					important information.	*/
+			/*   child process which holds necessary information.	*/
 
 
 
@@ -152,12 +157,12 @@
 >> B3: Describe your code for reading and writing user data from the
 >> kernel.
 
-		First of all I check whether the stack pointer is valid using ptr_validator() 
-		method. If so, I check system call that has to run. 
+		First I check whether the stack pointer is valid using ptr_validator() 
+		method. If so, I check system call that has to run. (read or write)
 		
 		After that I take all arguments for that system call.
 		Now I check the whether the buffer is valid using buf_validator() 
-		method. If so, execute the system call
+		method. If so, execute the system call according to their type (read(), write())
 
 
 
@@ -193,7 +198,12 @@
 >> paragraphs, describe the strategy or strategies you adopted for
 >> managing these issues.  Give an example.
 
-		//answer do not know
+		 I have introduced a function named ptr_validator which will validate 
+		 the pointer  by checking  is_user_vaddr. If it is not system will exit(-1).
+		 I also introduced a function to validate strings (str_validator()) to
+		 look up the page that it is in. To handle buffers I build buf_validator() function.
+		 It will validate all the pointers one by one using the function ptr_validator().
+
 
 
 ---- SYNCHRONIZATION ----
@@ -203,9 +213,8 @@
 >> loading.  How does your code ensure this?  How is the load
 >> success/failure status passed back to the thread that calls "exec"?
 
-		I keep track of the status in the child_process struct.
-		When I find the process id, I check the status if it is loaded or not. 
-		If not then exit with -1. (exit(-1))
+		I keep the status in the child_process struct. I check the status if 
+		it is loaded or not using procss_id. If not then exit with -1. (exit(-1))
 
 
 >> B8: Consider parent process P with child process C.  How do you
@@ -215,12 +224,11 @@
 >> terminates without waiting, before C exits?  After C exits?  Are
 >> there any special cases?
 
-		When P waits for C, P will stop and wait for C to exit. (process_wait())
-		When C exits lock will be released.
-		If P calls wait after C exits, P will not wait sinnce it has no child processes.
-		When P terminates before C exits, P kills all of its children including C.
-		All of the children will be terminated and release their locks.
-		When P terminates after C exits, C's locks will be released. 
+		If P is waiting for C, P will stop and wait for C to finish. 
+		When C finishes it will exit() and the lock is released. 
+		If P wants to wait after C finishes, P will not wait because there are no child processes. 
+		If P exits before C exits, P kills all children, including C. Then all children will be finished and unlocked. 
+		When P finishes after C exits, C will be unlocked.
 
 
 ---- RATIONALE ----
@@ -228,19 +236,17 @@
 >> B9: Why did you choose to implement access to user memory from the
 >> kernel in the way that you did?
 
-		I chose to use function decomposition for error catching. 
-		This reduces the difficulty and is more simple than to implement 
-		page fault memory handling.
-		Whenever a pointer is invalid, it will be caught by the page fault interrupt
-  		handler. 
-		In the interrupt handler the exit(-1) function is called.
+		I use function decomposition for error catching. 
+		It reduces the difficulty and is more simpler to implement.
+		When a pointer is invalid, it will be caught by the page fault interrupt
+  		handler. Then the exit(-1) function will be called.
 
 
 >> B10: What advantages or disadvantages can you see to your design
 >> for file descriptors?
 
-		Since every file descriptor is unique for each process, it eliminates
-  		the need to account for race conditions. 
+		advantage:
+			It eleminates the possibility of occuring a race conditions. 
 
 
 >> B11: The default tid_t to pid_t mapping is the identity mapping.
