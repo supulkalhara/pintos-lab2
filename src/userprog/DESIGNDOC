@@ -8,8 +8,7 @@
 
 >> Fill in the names and email addresses of your group members.
 
-190482K
-Supul Pushpakumara <supul.19@cse.mrt.ac.lk>
+190482K - Supul Pushpakumara - supul.19@cse.mrt.ac.lk
 
 
 ---- PRELIMINARIES ----
@@ -20,10 +19,10 @@ Supul Pushpakumara <supul.19@cse.mrt.ac.lk>
 >> Please cite any offline or online sources you consulted while
 >> preparing your submission, other than the Pintos documentation, course
 >> text, lecture notes, and course staff.
-https://oslab.kaist.ac.kr/pintosslides/
-https://inst.eecs.berkeley.edu/~cs162/su19/static/projects/proj2.pdf
-https://www.youtube.com/watch?v=dQyvVZzTV5E&t=2s
-https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
+		https://oslab.kaist.ac.kr/pintosslides/
+		https://inst.eecs.berkeley.edu/~cs162/su19/static/projects/proj2.pdf
+		https://www.youtube.com/watch?v=dQyvVZzTV5E&t=2s
+		https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 
 
 			   ARGUMENT PASSING
@@ -62,20 +61,22 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 >> A2: Briefly describe how you implemented argument parsing.  How do
 >> you arrange for the elements of argv[] to be in the right order?
 >> How do you avoid overflowing the stack page?
-		used strtok_r() function
 
-		- If argc >= argvs size, we realloc argv to double the previous size
-
+		
 
 ---- RATIONALE ----
 
 >> A3: Why does Pintos implement strtok_r() but not strtok()?
-		strtok_r() requires the position of the next token. Because of that strtok_r is said to be thread safe (avoiding race condition) and because of the tokens it can be used in nested loops.
+
+		strtok_r() requires the position of the next token. 
+		Because of that strtok_r is said to be thread safe (avoiding race condition)
+		and because of the tokens it can be used in nested loops.
 
 
 >> A4: In Pintos, the kernel separates commands into a executable name
 >> and arguments.  In Unix-like systems, the shell does this
 >> separation.  Identify at least two advantages of the Unix approach.
+
 		UNIX approach restricts user from passing bad arguments to kernel.
 		Kernal does not need to deal with the parsing procedure.
 	
@@ -123,14 +124,16 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 				int fd;
 				struct list_elem elem;
 			};
-			/*   The process_file holds the file you're currently working with. It contains the file descriptor and the content of the file.	*/
+			/*   The process_file holds the file that we are currently working with. It contains 
+					the file descriptor and the content of the file.	*/
 
 			struct child_process {
 			int pid, load_status, wait, exit, status;
 			struct semaphore load_sema, exit_sema;
 			struct list_elem elem;
 			};
-			/*   The struct child_process is meant to be a child process which will hold important information such as the pid, load status and semaphores. */
+			/*   The struct child_process is meant to be a child process which will hold 
+					important information.	*/
 
 
 
@@ -138,10 +141,10 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 >> Are file descriptors unique within the entire OS or just within a
 >> single process?
 
-			The file descriptors are unique to each open file for every process. Each
-		process has its only file descriptor counter, which will be incremented
-		each time a file is opened. Therefore, the file descriptor is unique for each
-		separate process.
+		File descriptors are unique for each open file per process. 
+		Each process has the only file descriptor counter that is incremented by 
+ 		each time a file is opened. 
+		Because of that, the file descriptor is unique within a single process.
 
 
 ---- ALGORITHMS ----
@@ -149,13 +152,13 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 >> B3: Describe your code for reading and writing user data from the
 >> kernel.
 
-			For both write and read, we first check if the stack pointer is valid. 
-		If the stack is valid then we can dereference the pointer and find out 
-		which system call to run.
-			Then we get the three arguments that will be use for the system call 
-		“write” or “read” depending on the dereferenced pointer. Next we will 
-		check if the buffer is valid. If it is then we can proceed with the 
-		system call.
+		First of all I check whether the stack pointer is valid using ptr_validator() 
+		method. If so, I check system call that has to run. 
+		
+		After that I take all arguments for that system call.
+		Now I check the whether the buffer is valid using buf_validator() 
+		method. If so, execute the system call
+
 
 
 >> B4: Suppose a system call causes a full page (4,096 bytes) of data
@@ -164,14 +167,16 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 >> (e.g. calls to pagedir_get_page()) that might result?  What about
 >> for a system call that only copies 2 bytes of data?  Is there room
 >> for improvement in these numbers, and how much?
-		//answer!
+
+		//answer do not know
 
 
 >> B5: Briefly describe your implementation of the "wait" system call
 >> and how it interacts with process termination.
-			The system call "wait" calls process_wait which will wait for child
-		processes to terminate using a while loop with sentinel being the child
-		process exit member variable.
+
+		The system call "wait" invokes process wait, 
+		which uses a while loop to wait for child processes to quit, 
+		using sentinel as the child process exit member variable.
 
 
 >> B6: Any access to user program memory at a user-specified address
@@ -187,7 +192,8 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 >> allocated resources (locks, buffers, etc.) are freed?  In a few
 >> paragraphs, describe the strategy or strategies you adopted for
 >> managing these issues.  Give an example.
-		//??????????????
+
+		//answer do not know
 
 
 ---- SYNCHRONIZATION ----
@@ -196,9 +202,11 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 >> fails, so it cannot return before the new executable has completed
 >> loading.  How does your code ensure this?  How is the load
 >> success/failure status passed back to the thread that calls "exec"?
-		I keep track of the status (loaded or not loaded) in a child_process struct.
-		So after I find the pid, check the status if it is loaded or not. If not
-		then exit with error (-1).
+
+		I keep track of the status in the child_process struct.
+		When I find the process id, I check the status if it is loaded or not. 
+		If not then exit with -1. (exit(-1))
+
 
 >> B8: Consider parent process P with child process C.  How do you
 >> ensure proper synchronization and avoid race conditions when P
@@ -206,35 +214,39 @@ https://stackoverflow.com/questions/26456510/what-does-asm-volatile-do-in-c
 >> that all resources are freed in each case?  How about when P
 >> terminates without waiting, before C exits?  After C exits?  Are
 >> there any special cases?
-		When P waits for C, P will stop and wait for C to exit. When C exits its
-		lock are released. If P calls wait after C exits, P will have no child to wait
-		for so it won't wait.
+
+		When P waits for C, P will stop and wait for C to exit. (process_wait())
+		When C exits lock will be released.
+		If P calls wait after C exits, P will not wait sinnce it has no child processes.
 		When P terminates before C exits, P kills all of its children including C.
 		All of the children will be terminated and release their locks.
-		When P terminates after C exits, C's locks should be released. 
+		When P terminates after C exits, C's locks will be released. 
+
 
 ---- RATIONALE ----
 
 >> B9: Why did you choose to implement access to user memory from the
 >> kernel in the way that you did?
 
-		For access to user memory from the kernel, we chose to use function 
-		decomposition for error catching. This reduces the difficulty and is
-		more simple than to implement page fault memory handling.
-
+		I chose to use function decomposition for error catching. 
+		This reduces the difficulty and is more simple than to implement 
+		page fault memory handling.
 		Whenever a pointer is invalid, it will be caught by the page fault interrupt
-  		handler. In the interrupt handler the syscall exit(-1) is called.
+  		handler. 
+		In the interrupt handler the exit(-1) function is called.
 
 
 >> B10: What advantages or disadvantages can you see to your design
 >> for file descriptors?
+
 		Since every file descriptor is unique for each process, it eliminates
   		the need to account for race conditions. 
 
 
 >> B11: The default tid_t to pid_t mapping is the identity mapping.
 >> If you changed it, what advantages are there to your approach?
-		I used the default tid_t to pid_t mapping.
+
+		I did not change
 
 
 			   SURVEY QUESTIONS
