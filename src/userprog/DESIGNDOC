@@ -63,7 +63,7 @@
 >> How do you avoid overflowing the stack page?
 
 		I took the input and split them from ' ' using strtok_r and assigned the filename to token to create the thread.  
-		After that I took the original input and split them into a string array. Then I copied those separated strings 
+		After that I took the original input and split them into a string array in a reverse order. Then I copied those separated strings 
 		in to the stack in the given order in the setup_stack() function. Since I do not know the exact size of the
 		arguments, I gave it an initial value using malloc() and check if the size is not enough for all the arguments 
 		in a for loop. If it is not enough I realloc() the array to double its size. So that it can handle any size of args.
@@ -180,8 +180,13 @@
 >> and how it interacts with process termination.
 
 		The system call "wait" invokes process wait, 
-		which uses a while loop to wait for child processes to quit, 
-		using sentinel as the child process exit member variable.
+		which uses a while loop to wait for child processes to quit. 
+		I used the child_process struct to get the child_process by 
+		using the child id to search the thread from the child_list. 
+		If it was terminated by the kernel function will return SYS_ERROR(-1).  
+		If TID is invalid or if it was not a child of the calling process, 
+		or if process_wait() has already been successfully called for the given TID, 
+		function will return SYS_ERROR(-1) immediately, without waiting.
 
 
 >> B6: Any access to user program memory at a user-specified address
