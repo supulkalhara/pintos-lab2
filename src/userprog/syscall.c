@@ -101,7 +101,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 
 
 
-    /* Wait for a child process to die. */  
+    /* Wait for child process to die. */  
     case SYS_WAIT:
     
       // take all the arguments needed to the arg from stack
@@ -569,12 +569,12 @@ close_file (int file_descriptor) {
   
   for (;e != list_end(&t->file_list); e = next) {
     next = list_next(e);
-    struct process_file *process_file_ptr = list_entry (e, struct process_file, elem);
+    struct process_file *ptr_processing_file = list_entry (e, struct process_file, elem);
 
-    if (file_descriptor == process_file_ptr->fd || file_descriptor == ALL_FDESC_CLOSE) {
-      file_close(process_file_ptr->file);
-      list_remove(&process_file_ptr->elem);
-      free(process_file_ptr);
+    if (file_descriptor == ptr_processing_file->fd || file_descriptor == ALL_FDESC_CLOSE) {
+      file_close(ptr_processing_file->file);
+      list_remove(&ptr_processing_file->elem);
+      free(ptr_processing_file);
 
       if (file_descriptor != ALL_FDESC_CLOSE)
         return;
