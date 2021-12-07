@@ -203,11 +203,8 @@
 >> paragraphs, describe the strategy or strategies you adopted for
 >> managing these issues.  Give an example.
 
-		 I have introduced a function named ptr_validator which will validate 
-		 the pointer  by checking  is_user_vaddr. If it is not system will exit(-1).
-		 I also introduced a function to validate strings (str_validator()) to
-		 look up the page that it is in. To handle buffers I build buf_validator() function.
-		 It will validate all the pointers one by one using the function ptr_validator().
+		 I modified the exception.c file's page_fault function. If
+		 a page fault occurs due to any reason, it calls exit(-1)
 
 
 
@@ -242,7 +239,6 @@
 >> kernel in the way that you did?
 
 		I use function decomposition for error catching. 
-		It reduces the difficulty and is more simpler to implement.
 		When a pointer is invalid, it will be caught by the page fault interrupt
   		handler. Then the exit(-1) function will be called.
 

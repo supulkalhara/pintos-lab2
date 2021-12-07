@@ -22,7 +22,6 @@
 int get_page (const void *vaddr);
 void children_remove (void);
 struct child_process* find_child (int pid);
-void child_remove (struct child_process *child);
 struct file* get_file(int filedes);
 int add_file (struct file *file_name);
 void syscall_halt (void);
@@ -96,18 +95,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 
     /* Start another process. */  
     case SYS_EXEC: 
-    
-      // take all the arguments needed to the arg from stack
-      stack_access(f, &arg[0], 1);
-      
-      // check validity
-      str_validator((const void *) arg[0]);
-      
-      // get page pointer (command line)
-      arg[0] = get_page((const void *)arg[0]);
-
-      // execute the command line
-      f->eax = exec((const char *) arg[0]); 
+      exec((const char *) arg[0]); 
 
       break;
 
@@ -430,10 +418,10 @@ get_file (int filedes) {
   
   for (; e != list_end(&t->file_list); e = next) {
     next = list_next(e);
-    struct process_file *process_file_ptr = list_entry(e, struct process_file, elem);
+    struct process_file *ptr_processing_file = list_entry(e, struct process_file, elem);
 
-    if (filedes == process_file_ptr->fd)
-      return process_file_ptr->file;
+    if (filedes == ptr_processing_file->fd)
+      return ptr_processing_file->file;
   }
   
   return NULL;
@@ -442,22 +430,7 @@ get_file (int filedes) {
 
 pid_t
 exec(const char* cmdline) {
-
-    pid_t pid = process_execute(cmdline);
-    struct child_process *child_process_ptr = find_child(pid);
-
-    if (!child_process_ptr)
-      return SYS_ERROR;
-
-    if (child_process_ptr->load_status == NOT_LOADED)
-      sema_down(&child_process_ptr->load_sema);
-
-    if (child_process_ptr->load_status == LOAD_FAILED) {
-      child_remove(child_process_ptr);
-      return SYS_ERROR;
-    }
-
-    return pid;
+    //tobe
 }
 
 
@@ -569,12 +542,6 @@ struct child_process* find_child(int pid) {
 }
 
 
-/* remove one child process */
-void
-child_remove (struct child_process *child_pr) {
-  list_remove(&child_pr->elem);
-  free(child_pr);
-}
 
 
 /* remove all child processes */
@@ -614,20 +581,3 @@ close_file (int file_descriptor) {
     }
   }
 }
-
-
-/**
- *
- * FAIL tests/userprog/sc-boundary-3
- * pintos -p tests/userprog/sc-boundary-3 -a sc-boundary-3 -- -q  -f run sc-boundary-3 
- * 
- * FAIL tests/userprog/exec-bound-2
- * pintos -p tests/userprog/exec-bound-2 -a exec-bound-2 -- -q  -f run exec-bound-2
- * 
- * FAIL tests/userprog/multi-recurse
- * pintos -p tests/userprog/multi-recurse -a multi-recurse -- -q  -f run 'multi-recurse 15'
- * 
- * rox (all rox are failing)
- * FAIL tests/userprog/no-vm/multi-oom
- *  
- **/
